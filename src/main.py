@@ -11,14 +11,10 @@ class _Args:
 
 
 def _increment_string(string: str) -> str:
-    # if the last character is z it needs to not overflow
-    if string[-1] == "z":
-        try:
-            return _increment_string(string[:-1]) + "a"
-        # if the string is empty the length needs to be increased
-        except IndexError:
-            return (len(string) + 1) * "a"
-    return string[:-1] + chr(ord(string[-1]) + 1)
+    for i in range(-1, -len(string) - 1, -1):
+        if string[i] != "z":
+            return f"{string[:i]}{chr(ord(string[i]) + 1)}{'a' * -(i + 1)}"
+    return "a" * (len(string) + 1)
 
 
 def decrypt(start: str, end: str, digest: str) -> str | None:
