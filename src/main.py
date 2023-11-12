@@ -38,7 +38,10 @@ def decrypt(start: str, end: str, digest: str) -> str | None:
         raise ValueError
     with futures.ProcessPoolExecutor() as executor:
         results = executor.map(
-            _check_password, _iterate_strings(start, end), itertools.repeat(digest)
+            _check_password,
+            _iterate_strings(start, end),
+            itertools.repeat(digest),
+            chunksize=128,
         )
         for res in results:
             if res is not None:
