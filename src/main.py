@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import argparse
+import functools
 import hashlib
-import itertools
 from collections.abc import Iterable
 from concurrent import futures
 
@@ -37,12 +37,8 @@ def decrypt(start: str, end: str, digest: str) -> str | None:
     if len(end) < len(start):
         raise ValueError
     with futures.ProcessPoolExecutor() as executor:
-        results = executor.map(
-            _check_password,
-            _iterate_strings(start, end),
-            itertools.repeat(digest),
-            chunksize=128,
-        )
+        check = functools.partial(_check_password, digest=digest)
+        results = executor.map(check, _iterate_strings(start, end), chunksize=128)
         for res in results:
             if res is not None:
                 executor.shutdown(False, cancel_futures=True)
