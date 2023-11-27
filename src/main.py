@@ -1,45 +1,30 @@
 import asyncio
+import concurrent.futures
 
-from helpers import decrypt
+from connection import recv, send
 
 
 async def main():
-    reader, writer = await asyncio.open_connection()
+    reader, writer = await asyncio.open_connection("10.30.56.235", 9999)
     writer.write(b"amogus")
     await writer.drain()
-    my_id = await reader.read(2)
-    print(f"Received id: {my_id}")
+    my_id = await reader.read(6)
     writer.write(my_id)
     await writer.drain()
-    while True:
+    with concurrent.futures.ProcessPoolExecutor() as executor:
         try:
-            data = await asyncio.wait_for(reader.read(64), 60)
-            writer.write(b"ok")
-            start, stop, digest = [
-                section.split(":")[1] for section in data.decode().split(",")
-            ]
-            result = decrypt(start, stop, digest)
-            if result is not None:
-                writer.write(f"success:{result}".encode())
-                await writer.drain()
-                if await asyncio.wait_for(reader.read(2), 60) == b"ok":
-                    success = True
-                    break
-            else:
-                writer.write(b"failed")
-                await writer.drain()
-                await reader.read(2)
-                writer.write(b"next")
-                await writer.drain()
-        except TimeoutError:
-            success = False
-            break
-    if success:
-        writer.write(b"end:success")
-        await writer.drain()
-        await reader.read(64)
-    else:
-        writer.write(b"end:exit")
+            queue = asyncio.Queue[bytes]()
+            future = asyncio.gather(recv(reader, queue), send(writer, executor))
+            while True:
+                end = await queue.get()
+                if end.startswith(b"end"):
+                    future.cancel()
+                    print(end.rsplit(b":", 1)[1].decode())
+        except KeyboardInterrupt:
+            writer.write(b"failed:end")
+            await writer.drain()
+            await reader.read()
+            return
 
 
 if __name__ == "__main__":
