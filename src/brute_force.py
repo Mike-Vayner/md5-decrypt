@@ -56,7 +56,7 @@ async def brute_force(
                 yield batch
 
         chunks = batched(combinations, 1024)
-    futures = (loop.run_in_executor(executor, check, chunk) for chunk in chunks)
+    futures = [loop.run_in_executor(executor, check, chunk) for chunk in chunks]
     for future in asyncio.as_completed(futures):
         if password := await future:
             if executor:
