@@ -1,6 +1,8 @@
 import asyncio
 import concurrent.futures
 
+from playsound import playsound
+
 from connection import recv, send
 
 
@@ -20,6 +22,8 @@ async def main():
                 if end.startswith(b"end"):
                     future.cancel()
                     print(end.rsplit(b":", 1)[1].decode())
+                    playsound("../matadore.mp3")
+                    return
         except KeyboardInterrupt:
             writer.write(b"failed:end")
             await writer.drain()
