@@ -3,7 +3,7 @@ import concurrent.futures
 
 from brute_force import brute_force
 
-rqueue, wqueue = asyncio.Queue[bytes](), asyncio.Queue[bytes]()
+rqueue = asyncio.Queue[bytes]()
 
 
 async def send(writer: asyncio.StreamWriter, executor: concurrent.futures.Executor):
